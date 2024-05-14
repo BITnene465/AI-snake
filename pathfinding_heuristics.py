@@ -1,63 +1,10 @@
 import random
 from collections import deque
 import copy
-
-
-class GameGraph(object):
-    def __init__(self, snake, food, edges):
-        self.snake = snake
-        self.food_x, self.food_y = food
-        self.edges = edges
-        self.aim_x = 0
-        self.aim_y = 0
-        self.graph_size = (edges['xmax'] - edges['xmin'] + 10)*(edges['ymax'] - edges['ymin'] + 10)//100
-
-    def set_food(self, food):
-        self.food_x, self.food_y = food
-
-    def set_aim(self, aim_x, aim_y):
-        self.aim_x = aim_x
-        self.aim_y = aim_y
-
-    def move_snake(self):
-        head_move_x = self.snake[-1][0] + self.aim_x
-        head_move_y = self.snake[-1][1] + self.aim_y
-        self.snake.append((head_move_x, head_move_y))
-        if head_move_x != self.food_x or head_move_y != self.food_y:
-            self.snake.pop(0)  # 弹出尾部（也即更新蛇蛇）
-        # print("head:", self.snake[-1], "tail:", self.snake[0], "aim:", self.aim_x, self.aim_y)   # 监测蛇蛇
-
-
-    def is_inside(self, position):
-
-        if (self.edges['xmin'] <= position[0] <= self.edges['xmax'] and
-                self.edges['ymin'] <= position[1] <= self.edges['ymax']):
-            return True
-        else:
-            return False
-
-    def is_valid_move(self, move):
-        head_move = (self.snake[-1][0] + move[0], self.snake[-1][1] + move[1])
-        if not self.is_inside(head_move) or (head_move in self.snake and head_move != self.snake[0]):
-            return False
-        return True
-
-    def is_collision(self, position):
-        if position == self.snake[0]:   # 刚好是尾部,特判一下
-            return False
-        if position in self.snake:
-            return True
-        return False
-
-    def to_tail(self):
-        return bfs(self.snake[-1], self.snake[0], self)
-
-    def longest_to_tail(self):
-        return dfs_longest(self.snake[-1], self.snake[0], self)
-
+from GameGraph import GameGraph
 
 def bfs(start, end, game_graph: GameGraph):  # 最重要的函数之一
-    moves = [(0, 10), (0, -10), (10, 0), (-10, 0)]
+    moves = [(0, 1), (0, -1), (1, 0), (-1, 0)]
     # 使用广度优先搜索查找最短路径
     queue = deque()
     queue.append(start)
@@ -98,11 +45,11 @@ def dfs_longest(start, end, game_graph: GameGraph):  # 最重要的函数之一
     stack = [(start, [])]
     longest_path = None
 
-    moves = [(0, 10), (0, -10), (10, 0), (-10, 0)]
+    moves = [(0, 1), (0, -1), (1, 0), (-1, 0)]
     while stack:
         node, path = stack.pop()
         visited_nodes.add(node)
-        path = path + [node]
+        path += [node]
 
         if node == end:
             if longest_path is None or len(path) > len(longest_path):
@@ -116,23 +63,24 @@ def dfs_longest(start, end, game_graph: GameGraph):  # 最重要的函数之一
 
             if (not game_graph.is_collision(next_position) and game_graph.is_inside(next_position)
                     and next_position not in visited_nodes):
-                stack.append((next_position, path))
+                stack.append((next_position, list(path)))   # 又是一个因为 py 没有指针而引发惨案
 
     return longest_path
 
 
 def pathfinding(game_graph: GameGraph) -> (int, int):
-    moves = [(0, 10), (0, -10), (10, 0), (-10, 0)]
+    moves = [(0, 1), (0, -1), (1, 0), (-1, 0)]
     food = (game_graph.food_x, game_graph.food_y)
     path_to_food = bfs(game_graph.snake[-1], food, game_graph)
-    path_to_tail = game_graph.to_tail()
+    path_to_tail = bfs(game_graph.snake[-1], game_graph.snake[0], game_graph)
     # 只剩最后一个食物的特判
     if len(game_graph.snake) == game_graph.graph_size - 1 and path_to_food is not None:
-        return path_to_food[1][0] - path_to_food[0][0], path_to_food[1][1] - path_to_food[0][1]   # 直接跑向食物就可以
+        return path_to_food[1][0] - path_to_food[0][0], path_to_food[1][1] - path_to_food[0][1]
 
     # 长度为1 特判
     if path_to_food is not None and len(game_graph.snake) == 1:
-        return path_to_food[1][0] - path_to_food[0][0], path_to_food[1][1] - path_to_food[0][1]
+        return path_to_food[1][0] - path_to_food[0][0], path_to_food[1][1] - path_to_food[0][1]   # 直接跑向食物就可以
+
     # 能够吃到食物
     if path_to_food is not None:
         virtual_game_graph = copy.deepcopy(game_graph)
@@ -140,20 +88,20 @@ def pathfinding(game_graph: GameGraph) -> (int, int):
         virtual_game_graph.aim_x = move[0]
         virtual_game_graph.aim_y = move[1]
         virtual_game_graph.move_snake()  # 得到虚拟蛇
-        path_to_tail2 = virtual_game_graph.to_tail()
+        path_to_tail2 = bfs(virtual_game_graph.snake[-1], virtual_game_graph.snake[0], virtual_game_graph)
         # 虚拟蛇可以到达尾巴，则原蛇可以移动
         if path_to_tail2 is not None:
             return move
         # 虚拟蛇无法到达尾巴，但是原蛇可以到达尾巴，向 到尾巴的最长路径前进
         elif path_to_tail is not None:
-            longest_path_to_tail = game_graph.longest_to_tail()   # 最短路存在，那么最长路也一定存在
+            longest_path_to_tail = dfs_longest(game_graph.snake[-1], game_graph.snake[0], game_graph)   # 最短路存在，那么最长路也一定存在
             move = (longest_path_to_tail[1][0] - longest_path_to_tail[0][0],
                     longest_path_to_tail[1][1] - longest_path_to_tail[0][1])
             return move
 
     # 不能吃到食物且原蛇可以到达尾巴，向远离尾巴的方向前进
     if path_to_food is None and path_to_tail is not None:
-        longest_path_to_tail = game_graph.longest_to_tail()
+        longest_path_to_tail = dfs_longest(game_graph.snake[-1], game_graph.snake[0], game_graph)
         move = (longest_path_to_tail[1][0] - longest_path_to_tail[0][0],
                 longest_path_to_tail[1][1] - longest_path_to_tail[0][1])
         return move
@@ -164,7 +112,7 @@ def pathfinding(game_graph: GameGraph) -> (int, int):
         if game_graph.is_valid_move(move):
             right_moves.append(move)
     if len(right_moves) == 0:
-        return 0, 10      # 这蛇直接撞死吧，没救了
+        return 0, 1      # 这蛇直接撞死吧，没救了
     return right_moves[random.randint(0, len(right_moves)-1)]   # 两端都包括
 
     # todo 当没法吃到食物并且没法找到尾巴时，采用 A* 算法向远离食物的方向前进
@@ -172,5 +120,5 @@ def pathfinding(game_graph: GameGraph) -> (int, int):
 
 # 测试代码
 if __name__ == '__main__':
-    game = GameGraph([(0, 0), (0, 10)], (0, 0), {'xmin': -200, 'xmax': 180, 'ymin': -190, 'ymax': 190})
-    print(dfs_longest((0, 0), (10, 10), game))
+    game = GameGraph([(0, 0), (0, 1)], (0, 0), {'xmin': -20, 'xmax': 18, 'ymin': -19, 'ymax': 19}, 10)
+    print(dfs_longest((0, 0), (1, 1), game))
