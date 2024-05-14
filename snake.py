@@ -1,8 +1,9 @@
 import copy
 import turtle
 import random
+from typing import Optional, Callable, Tuple
 from GameGraph import GameGraph
-from pathfinding_heuristics import pathfinding
+import pathfinding_heuristics  # 只是为了提供一个可测试的函数，可以不需要
 
 # 常量区
 LEFT, RIGHT, TOP, BOTTOM = 0, 0, 0, 0
@@ -10,6 +11,9 @@ all_food = []                  # 所有食物的位置
 SIZE = None   # 每个方块的尺寸
 LOOSE = None   # 达到 LOOSE*全部方格数 就算赢
 MAX_REFRESH_RATE = None  # 最大刷新率  但是不一定可以达到
+
+# 核心寻路函数
+pathfinding: Optional[Callable[[GameGraph], Tuple[int, int]]] = None
 
 # 核心变量
 game_graph = None
@@ -138,14 +142,15 @@ def move():
     turtle.ontimer(move, int(1000 / MAX_REFRESH_RATE))  # 1 s = 1000 ms
 
 
-def start(left=-6, right=6, top=6, bottom=-6, size=40, score_rate=3/4, max_fresh_rate=60):
+def start(left=-4, right=4, top=4, bottom=-4, size=40, score_rate=11/12, max_fresh_rate=60,
+          pathfinding_func=pathfinding_heuristics.pathfinding):
     # 引入核心变量，用于赋值
     global game_graph
     global LEFT, RIGHT, TOP, BOTTOM
     global all_food, food_x, food_y
     global aim_x, aim_y
     global SIZE, MAX_REFRESH_RATE, LOOSE
-    global snake, score
+    global snake, score, pathfinding
 
     # 常量赋值
     MAX_REFRESH_RATE = max_fresh_rate
@@ -155,6 +160,9 @@ def start(left=-6, right=6, top=6, bottom=-6, size=40, score_rate=3/4, max_fresh
     for x in range(LEFT, RIGHT + 1, 1):
         for y in range(BOTTOM, TOP + 1, 1):
             all_food.append((x, y))
+
+    # 核心寻路函数
+    pathfinding = pathfinding_func
 
     # 核心变量赋值
     snake = [(0, 0), (1, 0)]   # list内一定要使用元组
@@ -167,7 +175,7 @@ def start(left=-6, right=6, top=6, bottom=-6, size=40, score_rate=3/4, max_fresh
 
     # Snake, 启动！
     # os.system("pause")
-    turtle.setup((right - left + 10)*size, (top - bottom + 10)*size)
+    turtle.setup((right - left + 15)*size, (top - bottom + 15)*size)
     turtle.title('贪吃蛇')
     turtle.hideturtle()
     turtle.tracer(False)   # 不显示轨迹

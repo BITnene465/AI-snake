@@ -68,7 +68,7 @@ def dfs_longest(start, end, game_graph: GameGraph):  # 最重要的函数之一
     return longest_path
 
 
-def pathfinding(game_graph: GameGraph) -> (int, int):
+def pathfinding(game_graph: GameGraph) -> (int, int):   # 传入的是 game_graph的引用，不会有额外的开销
     moves = [(0, 1), (0, -1), (1, 0), (-1, 0)]
     food = (game_graph.food_x, game_graph.food_y)
     path_to_food = bfs(game_graph.snake[-1], food, game_graph)
