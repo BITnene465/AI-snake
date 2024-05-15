@@ -1,7 +1,7 @@
 import random
-from collections import deque
 import copy
 from GameGraph import GameGraph
+from collections import deque
 
 def bfs(start, end, game_graph: GameGraph):  # 最重要的函数之一
     moves = [(0, 1), (0, -1), (1, 0), (-1, 0)]
