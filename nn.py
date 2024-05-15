@@ -60,10 +60,12 @@ class Net(nn.Module):
             self.out.weight.data = weights[yy:z].reshape(self.d, self.c)
             self.out.bias.data = weights[z:]
 
-    def predict(self, input):
-        input = torch.tensor([input]).float()
+     def predict(self, input, weights):
+        self.update_weights(weights)  # 确保每次预测前都更新权重
+        # input = torch.tensor([input]).float()  # 确保输入格式正确
         y = self(input)
-        return torch.argmax(y, dim=1).item()  # 使用 .item() 获取张量中的值
+        print(self.fc1.weight[0][0])  # 打印第一层的权重以验证更新
+        return torch.argmax(y, dim=1).item()
 
 # 示例代码
 if __name__ == '__main__':
