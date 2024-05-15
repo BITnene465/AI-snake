@@ -3,7 +3,7 @@ import turtle
 import random
 from typing import Optional, Callable, Tuple
 from GameGraph import GameGraph
-import pathfinding_heuristics  # 只是为了提供一个可测试的函数，可以不需要
+import pathfinding_greedy  # 只是为了提供一个可测试的函数，可以不需要
 
 # 常量区
 LEFT, RIGHT, TOP, BOTTOM = 0, 0, 0, 0
@@ -143,7 +143,7 @@ def move():
 
 
 def start(left=-4, right=4, top=4, bottom=-4, size=40, score_rate=11/12, max_fresh_rate=60,
-          pathfinding_func=pathfinding_heuristics.pathfinding):
+          pathfinding_func=pathfinding_greedy.pathfinding):
     # 引入核心变量，用于赋值
     global game_graph
     global LEFT, RIGHT, TOP, BOTTOM

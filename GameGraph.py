@@ -3,10 +3,10 @@ class GameGraph(object):
         self.snake = snake
         self.food_x, self.food_y = food
         self.edges = edges
-        self.size = square_size
+        self.size = square_size   # 小正方形的边长
         self.aim_x = 0
         self.aim_y = 0
-        self.graph_size = (edges['xmax'] - edges['xmin'] + 1)*(edges['ymax'] - edges['ymin'] + 1)
+        self.graph_size = (edges['xmax'] - edges['xmin'] + 1)*(edges['ymax'] - edges['ymin'] + 1) # 游戏区域的尺寸（小正方形的个数）
 
     def set_food(self, food: (int, int)):
         self.food_x, self.food_y = food
@@ -45,3 +45,12 @@ class GameGraph(object):
         if position in self.snake:
             return True
         return False
+
+    def GetFood(self):
+        return self.food_x, self.food_y
+
+    def GetAim(self):
+        return self.aim_x, self.aim_y
+
+    def GetEdge(self):
+        return self.edges

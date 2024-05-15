@@ -18,7 +18,7 @@ def main():
     parser.add_argument("--size", type=int, default=40, help='每一小格的边长')
     parser.add_argument("--rate", type=int, default=60, help='最大刷新率')
     parser.add_argument("--score", type=float, default=11/12, help="获胜所需的分数占比")
-    parser.add_argument('-f', "--func", type=str, default="pathfinding_heuristics", help="寻路函数所在文件(模块)")
+    parser.add_argument('-f', "--func", type=str, default="pathfinding_greedy", help="寻路函数所在文件(模块)")
 
     args = parser.parse_args()
 
