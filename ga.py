@@ -20,19 +20,21 @@ class Individual:
         self.fitness = 0
         self.seed = None
 
-    def get_fitness(self):
+       def get_fitness(self):
         global score, snake  # 确保score和snake是全局变量
 
         # 生成并设置神经网络的权重
         nn_weights = np.array(self.genes)
         model = Net(32, 20, 12, 4, nn_weights)  # 创建神经网络实例
+        model.update_weights(self.genes)
 
-        # 定义pathfinding函数
-        pathfinding = pathfinding_MLP.pathfinding
+        # 定义包装后的寻路函数
+        def wrapped_pathfinding(game_graph):
+            return pathfinding(game_graph)
 
-        # 初始化游戏并传递寻路函数
+        # 初始化游戏
         start(left=-4, right=4, top=4, bottom=-4, size=40, score_rate=11 / 12, max_fresh_rate=60,
-              pathfinding_func=pathfinding)
+              pathfinding_func=wrapped_pathfinding)
 
         # 评估结果
         self.score = score
