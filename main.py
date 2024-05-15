@@ -19,6 +19,7 @@ def main():
     parser.add_argument("--rate", type=int, default=60, help='最大刷新率')
     parser.add_argument("--score", type=float, default=11/12, help="获胜所需的分数占比")
     parser.add_argument('-f', "--func", type=str, default="pathfinding_greedy", help="寻路函数所在文件(模块)")
+    parser.add_argument('--mode', type=int, default=0, help="0为游戏模式,会使用海龟绘图; 1为训练模式, 不画图以节省开销")
 
     args = parser.parse_args()
 
@@ -30,7 +31,7 @@ def main():
     if not callable(pathfinding_func):
         raise ValueError(f"Object {args.func} is not a function")
 
-    snake.start(args.left, args.right, args.top, args.bottom, args.size, args.score, args.rate, pathfinding_func)
+    snake.start(args.left, args.right, args.top, args.bottom, args.size, args.score, args.rate, pathfinding_func, is_train=bool(args.mode))
 
 
 
