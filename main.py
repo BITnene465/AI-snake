@@ -40,10 +40,10 @@ def main():
     ''' 遗传算法 '''
     ga = GA()
 
-    # if args.inherit:
-    #     ga.inherit_ancestor()
-    # else:
-    #     ga.generate_ancestor()
+    if args.inherit:
+        ga.inherit_ancestor()
+    else:
+        ga.generate_ancestor()
 
 
     generation = 0
