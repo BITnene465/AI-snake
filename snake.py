@@ -1,18 +1,15 @@
 import copy
-import time
 import turtle
 import random
 from typing import Optional, Callable, Tuple
 from GameGraph import GameGraph
-import pathfinding_greedy  # 只是为了提供一个可测试的函数，可以不需要
-
+import pathfinding_MLP
 # 常量区
 LEFT, RIGHT, TOP, BOTTOM = 0, 0, 0, 0
 all_food = []                  # 所有食物的位置
 SIZE = None   # 每个方块的尺寸
 LOOSE = None   # 达到 LOOSE*全部方格数 就算赢
 MAX_REFRESH_RATE = None  # 最大刷新率  但是不一定可以达到
-IS_TRAIN = None
 
 # 核心寻路函数
 pathfinding: Optional[Callable[[GameGraph], Tuple[int, int]]] = None
@@ -93,13 +90,9 @@ def draw_snake():
     # square(snake[-1][0], snake[-1][1], SIZE, 'red')  # 蛇头还得是红色
 
 def move() -> int:
-    '''
-    每一步更新的地方
-    返回值表示游戏是否继续，游戏结束时返回 0,未结束返回 1
-    '''
-    global food_x, food_y, score, LOOSE
+    global food_x, food_y, score
 
-    change(pathfinding(game_graph))     # 做决策时， move函数会等待决策
+    change(pathfinding(game_graph))
     # 同步一下 game_graph 的状态
     game_graph.set_aim(aim_x, aim_y)
     game_graph.move_snake()
@@ -112,59 +105,53 @@ def move() -> int:
     if not inside(head_move_x, head_move_y) or ((head_move_x, head_move_y) in snake and (head_move_x,head_move_y) != snake[0]):
         square(head_move_x, head_move_y, SIZE, 'blue')
         turtle.update()
-        print('最终得分: ', score)
-        return 0
+        print('得分: ', score)
+        return
 
     snake.append((head_move_x, head_move_y))
 
     # 判断是否吃到食物以及是否胜利
     if head_move_x == food_x and head_move_y == food_y:
         score += 1  # 每吃到一个食物加1分
-        print("当前得分：", score)
         if len(snake) >= len(all_food)*LOOSE:     # 限制松一点
             print('YOU WIN!')
-            print('最终得分: ', score)
-            return 0
+            return
         else:
             food_x, food_y = new_food()
             # 更新食物同时要更新蛇蛇，更新在 game_graph.snake 里
             game_graph.set_food((food_x, food_y))
     else:
-        snake.pop(0)  # 把蛇尾pop掉
+        snake.pop(0)
 
-    if not IS_TRAIN:
-        turtle.clear()
+    turtle.clear()
 
-        # 绘制边框, 蛇和食物
-        frame()
-        draw_snake()
-        square(food_x, food_y, SIZE, 'green')
+    # 绘制边框, 蛇和食物
+    frame()
+    draw_snake()
+    square(food_x, food_y, SIZE, 'green')
 
-        # 显示分数
-        turtle.penup()
-        turtle.goto((LEFT-4) * SIZE, (TOP+4) * SIZE )
-        turtle.color('black')
-        turtle.write(f'Score: {score}', align='left', font=('Arial', 22, 'bold'))
+    # 显示分数
+    turtle.penup()
+    turtle.goto((LEFT-4) * SIZE, (TOP+4) * SIZE )
+    turtle.color('black')
+    turtle.write(f'Score: {score}', align='left', font=('Arial', 22, 'bold'))
 
-        turtle.update()
+    turtle.update()
 
-        turtle.ontimer(move, int(1000 / MAX_REFRESH_RATE))  # 1 s = 1000 ms
-
-    return 1
+    turtle.ontimer(move, int(1000 / MAX_REFRESH_RATE))  # 1 s = 1000 ms
 
 
 def start(left=-4, right=4, top=4, bottom=-4, size=40, score_rate=11/12, max_fresh_rate=60,
-          pathfinding_func=pathfinding_greedy.pathfinding, is_train=False):
+          pathfinding_func=pathfinding_MLP.pathfinding):
     # 引入核心变量，用于赋值
     global game_graph
     global LEFT, RIGHT, TOP, BOTTOM
     global all_food, food_x, food_y
     global aim_x, aim_y
-    global SIZE, MAX_REFRESH_RATE, LOOSE, IS_TRAIN
+    global SIZE, MAX_REFRESH_RATE, LOOSE
     global snake, score, pathfinding
 
     # 常量赋值
-    IS_TRAIN = is_train
     MAX_REFRESH_RATE = max_fresh_rate
     LOOSE = score_rate
     LEFT, RIGHT, TOP, BOTTOM = left, right, top, bottom
@@ -187,17 +174,13 @@ def start(left=-4, right=4, top=4, bottom=-4, size=40, score_rate=11/12, max_fre
 
     # Snake, 启动！
     # os.system("pause")
-    if not is_train:
-        turtle.setup((right - left + 15)*size, (top - bottom + 15)*size)
-        turtle.title('贪吃蛇')
-        turtle.hideturtle()
-        turtle.tracer(False)   # 不显示轨迹
-        turtle.delay(0)
-        move()
-        turtle.done()
-    else:
-        while move():
-            pass
+    turtle.setup((right - left + 15)*size, (top - bottom + 15)*size)
+    turtle.title('贪吃蛇')
+    turtle.hideturtle()
+    turtle.tracer(False)   # 不显示轨迹
+    turtle.delay(0)
+    move()
+    # turtle.done()
 
-if __name__ == '__main__':
-    start()
+# if __name__ == '__main__':
+#     start()
