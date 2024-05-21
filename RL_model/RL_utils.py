@@ -6,8 +6,8 @@ from GameGraph import GameGraph
 set_seed(42)
 
 
-def get_step_thread(next_step_value: list):  # 设置每一步操作的区间值
-    next_step_list = torch.tensor(next_step_value)
+def get_step_thread(next_step_value: torch.Tensor):  # 设置每一步操作的区间值
+    next_step_list = next_step_value
     next_step_list = torch.softmax(next_step_list, dim=-1)
     next_step_info = []
     for i in range(len(next_step_list)):
@@ -19,40 +19,57 @@ def get_step_thread(next_step_value: list):  # 设置每一步操作的区间值
 
 
 def generate_decision(next_step_info):  # 在按照每一步相关的值进行操作时，生成相关的决策
-    x = torch.rand((1,))
+    _x = torch.rand((1,))
     for i in range(len(next_step_info)):
-        if x < next_step_info[i]:
+        if _x < next_step_info[i]:
             return i
 
 
-def get_train_decision(config, next_step_value: list) -> [(int, int)]:
+def get_train_decision(config, head_index, next_step_value: torch.Tensor) -> [(int, int)]:
     # 在训练时使用这个函数生成下一步的决策，90%的概率按照概率进行，10%的概率进行随机行走
     # 这里将每一步获得的value进行softmax操作，然后生成一个随机数，当随机数在某个区间中时，就采取哪个行为
     # 这样可以解决一个问题，就是当多个决策能够获得相同的value时，应该怎么走
+    # 不管如何，直接按照贪心进行选择
 
-    decision = config['decision']
-    if torch.rand((1,)) < 0.9:
-        next_step_info = get_step_thread(next_step_value)
-        next_step = generate_decision(next_step_info)
-        return decision[next_step]
+    decision = config['decision'][head_index]
+    if torch.rand((1,)) < 1:
+        # next_step_info = get_step_thread(next_step_value)
+        # next_step = generate_decision(next_step_info)
+        next_step = next_step_value.argmax(dim=-1)
+        return decision[next_step], next_step
     else:
         index = torch.randint(0, len(next_step_value) - 1, (1,))
-        return decision[index]
+        return decision[index], index
 
 
-def calculate_map_state(graph: GameGraph):
-    # 首先将当前地图的状态转化为矩阵，为一个(y_ * x_)的0矩阵
+def calculate_map_state(graph_: GameGraph, choices):
+    # 将图的状态转化为11个坐标，分别代表着(三个行为是否是danger的，当前头的移动方向，食物所在方向)
     # 其中，snake是蛇蛇的坐标，edges是包含地图边界信息的一个字典
     # target是躺过的坐标，在每次吃到糖果时会进行更新
-    snake = graph.snake
-    edges = graph.edges
-    target = (graph.food_x, graph.food_y)
+    snake = graph_.snake
+    edges = graph_.edges
+    target = (graph_.food_x, graph_.food_y)
     x_ = edges['xmax'] - edges['xmin'] + 1
     y_ = edges['ymax'] - edges['ymin'] + 1
     graph_map = torch.zeros((x_, y_))
-    graph_map[snake] = 1  # 将蛇身体所在的位置设置为1
-    graph_map[target] = 2  # 将糖果所在位置设为2
-    return graph_map
+    state_dict = []
+    for each in choices:
+        state_dict.append(graph_.is_valid_move(each) + 0)
+    direct_list = [0, 0, 0, 0]
+    direct_list[graph_.head_index] = 1
+    state_dict.extend(direct_list)
+    # 计算像哪个方向前进能够获得糖果
+    x_d = graph_.food_x - snake[-1][0]
+    y_d = graph_.food_y - snake[-1][1]
+    if graph_.head_index == 0:
+        state_dict.extend([(y_d < 0) + 0, (y_d > 0) + 0, (x_d < 0) + 0, (x_d > 0) + 0])
+    elif graph_.head_index == 1:
+        state_dict.extend([(x_d > 0) + 0, (x_d < 0) + 0, (y_d > 0) + 0, (y_d < 0) + 0])
+    elif graph_.head_index == 2:
+        state_dict.extend([(y_d > 0) + 0, (y_d < 0) + 0, (x_d > 0) + 0, (x_d < 0) + 0])
+    elif graph_.head_index == 3:
+        state_dict.extend([(x_d < 0) + 0, (x_d > 0) + 0, (y_d < 0) + 0, (y_d > 0) + 0])
+    return torch.tensor(state_dict, dtype=torch.float32)
 
 
 def generate_new_candy(graph):
@@ -70,24 +87,28 @@ def generate_new_candy(graph):
     return graph
 
 
-def update_graph_state(graph: GameGraph, decision: [(int, int)]) -> (GameGraph, ):
+def update_graph_state(graph_: GameGraph, decision_index, decision_: [(int, int)]) -> (GameGraph, bool):
     # 这里的snake是一个列表，通过pop其第0个元素，在末尾添加一个新的元素来模拟一个队列
     # 这个函数的返回值为更新后的graph
-    snake = graph.snake
+    snake = graph_.snake
     snake_head = snake[-1]
-    next_snake_head = (snake_head[0] + decision[0], snake_head[1] + decision[1])
-    end_game = graph.is_valid_move(decision)
-
-    if next_snake_head[0] == graph.food_x and next_snake_head[1] == graph.food_y:  # 假如吃到糖，则更新糖的位置
+    next_snake_head = (snake_head[0] + decision_[0], snake_head[1] + decision_[1])
+    if decision_index == 0:
+        graph_.head_index = graph_.head_index
+    elif decision_index == 1:
+        graph_.head_index = int((graph_.head_index - 1) % 4)
+    elif decision_index == 2:
+        graph_.head_index = int((graph_.head_index + 1) % 4)
+    if next_snake_head[0] == graph_.food_x and next_snake_head[1] == graph_.food_y:  # 假如吃到糖，则更新糖的位置
         snake.append(next_snake_head)
-        graph.snake = snake
-        graph = generate_new_candy
+        graph_.snake = snake
+        graph_ = generate_new_candy(graph_)
 
     else:
         snake.pop(0)
         snake.append(next_snake_head)
-        graph.snake = snake
+        graph_.snake = snake
 
-    return graph, end_game
+    return graph_
 
 
