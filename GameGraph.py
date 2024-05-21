@@ -7,6 +7,7 @@ class GameGraph(object):
         self.aim_x = 0
         self.aim_y = 0
         self.graph_size = (edges['xmax'] - edges['xmin'] + 1)*(edges['ymax'] - edges['ymin'] + 1) # 游戏区域的尺寸（小正方形的个数）
+        self.score = len(self.snake)
 
     def set_food(self, food: (int, int)):
         self.food_x, self.food_y = food
@@ -54,3 +55,6 @@ class GameGraph(object):
 
     def GetEdge(self):
         return self.edges
+
+    def scoreIncrease(self):
+        self.score += 1

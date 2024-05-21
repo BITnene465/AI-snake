@@ -12,7 +12,7 @@ def _heuristic1(start, end) -> float:
 def _heuristic2(start, end) -> float:
     return ((end[0]-start[0])**2 + (end[1]-start[1])**2)**0.5
 
-# 曼哈顿距离 + 随机权重 (不需要找最长) --> 破圈的希望
+# 曼哈顿距离 + 随机权重 (不需要找最短) --> 破圈的希望
 def _heuristic3(start, end) -> float:
     manhattan_distance = abs(end[0] - start[0]) + abs(end[1] - start[1])
     random_factor = random.uniform(0.9, 1.1)
@@ -21,14 +21,14 @@ def _heuristic3(start, end) -> float:
 heuristic1 = _heuristic3
 heuristic2 = None
 
-def A_star(start, end, game_graph):
+def A_star(start, end, game_graph, func):
     moves = [(0, 1), (0, -1), (1, 0), (-1, 0)]
     in_close = dict()   # 是否在 close_list 的判断数组
     g_value_dict = dict()   # 记录 g_value 的字典
     parent = dict()    # 记录每个点的前驱
     q = PriorityQueue()    # 实现算法的优先队列， 同时也是 open_list
 
-    q.put_nowait((heuristic1(start, end), start))    # (f(n), n)
+    q.put_nowait((func(start, end), start))    # (f(n), n)
     g_value_dict[start] = 0
     parent[start] = None
 
@@ -49,7 +49,7 @@ def A_star(start, end, game_graph):
 
             if nxt not in g_value_dict or new_g_value < g_value_dict[nxt]:   # 不移除旧值，所以 (II) (III) 统一了
                 g_value_dict[nxt] = new_g_value
-                f_value = new_g_value + heuristic1(nxt, end)
+                f_value = new_g_value + func(nxt, end)
                 q.put_nowait((f_value, nxt))
                 parent[nxt] = now
 
@@ -95,8 +95,8 @@ def dfs_longest(start, end, game_graph: GameGraph):  # 最重要的函数之一
 def pathfinding(game_graph: GameGraph) -> (int, int):   # 传入的是 game_graph的引用，不会有额外的开销
     moves = [(0, 1), (0, -1), (1, 0), (-1, 0)]
     food = (game_graph.food_x, game_graph.food_y)
-    path_to_food = A_star(game_graph.snake[-1], food, game_graph)
-    path_to_tail = A_star(game_graph.snake[-1], game_graph.snake[0], game_graph)
+    path_to_food = A_star(game_graph.snake[-1], food, game_graph, func=heuristic1)
+    path_to_tail = A_star(game_graph.snake[-1], game_graph.snake[0], game_graph, func=heuristic1)
     # 长度为1 特判
     if path_to_food is not None and len(game_graph.snake) == 1:
         return path_to_food[1][0] - path_to_food[0][0], path_to_food[1][1] - path_to_food[0][1]   # 直接跑向食物就可以
@@ -108,7 +108,8 @@ def pathfinding(game_graph: GameGraph) -> (int, int):   # 传入的是 game_grap
         virtual_game_graph.aim_x = move[0]
         virtual_game_graph.aim_y = move[1]
         virtual_game_graph.move_snake()  # 得到虚拟蛇
-        path_to_tail2 = A_star(virtual_game_graph.snake[-1], virtual_game_graph.snake[0], virtual_game_graph)
+        path_to_tail2 = A_star(virtual_game_graph.snake[-1], virtual_game_graph.snake[0],
+                               virtual_game_graph, func=heuristic1)
         # 虚拟蛇可以到达尾巴，则原蛇可以移动
         if path_to_tail2 is not None:
             return move
