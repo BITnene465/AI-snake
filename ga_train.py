@@ -1,0 +1,158 @@
+import numpy as np
+import random
+import os
+from nn import Net
+from snake import SnakeGame  # 确保这个模块可以正常导入
+from GameGraph import GameGraph  # 确保这个模块可以正常导入
+
+class Individual:
+    def __init__(self, genes):
+        self.genes = genes
+        self.score = 0
+        self.steps = 0
+        self.fitness = 0
+        self.network = Net(n_input=12, n_hidden1=20, n_hidden2=12, n_output=4, weights=self.genes)
+
+    def get_fitness(self):
+        game = SnakeGame(not_display_on_gui=True)
+        game.setup_game()
+        gg = game.getGamegraph()
+        step = 0
+        while True:
+            step += 1
+            input_vector = gg.to_input_vector()
+            direction = self.network.predict(input_vector)
+            res, gg = game.move_StepByStep(direction)
+            if not res or step >= 1000:  # 这里可以调整终止条件，比如达到一定分数或步数
+                break
+        self.score = game.score
+        self.fitness = self.score  # 你可以根据需要调整适应度计算方式
+
+# GA类和其它方法根据实际需求进行修改
+
+
+class GA:
+    def __init__(self, p_size, c_size, genes_len, mutate_rate):
+        self.p_size = p_size
+        self.c_size = c_size
+        self.genes_len = genes_len
+        self.mutate_rate = mutate_rate
+        self.population = []
+        self.best_individual = None
+        self.avg_score = 0
+
+    def generate_ancestor(self):
+        for i in range(self.p_size):
+            genes = np.random.uniform(-1, 1, self.genes_len)
+            self.population.append(Individual(genes))
+
+    def inherit_ancestor(self):
+        for i in range(self.p_size):
+            pth = os.path.join("genes", "genes/all", str(i))
+            with open(pth, "r") as f:
+                genes = np.array(list(map(float, f.read().split())))
+                self.population.append(Individual(genes))
+
+    def crossover(self, c1_genes, c2_genes):
+        point = np.random.randint(0, self.genes_len)
+        c1_genes[:point + 1], c2_genes[:point + 1] = c2_genes[:point + 1], c1_genes[:point + 1]
+
+    def mutate(self, c_genes):
+        mutation_array = np.random.random(c_genes.shape) < self.mutate_rate
+        mutation = np.random.normal(size=c_genes.shape)
+        mutation[mutation_array] *= 0.2
+        c_genes[mutation_array] += mutation[mutation_array]
+
+    def elitism_selection(self, size):
+        population = sorted(self.population, key=lambda individual: individual.fitness, reverse=True)
+        return population[:size]
+
+    def roulette_wheel_selection(self, size):
+        selection = []
+        wheel = sum(individual.fitness for individual in self.population)
+        if wheel == 0:
+            raise ValueError("Total fitness is zero, selection cannot proceed.")
+
+        for _ in range(size):
+            pick = np.random.uniform(0, wheel)
+            current = 0
+            for individual in self.population:
+                current += individual.fitness
+                if current > pick:
+                    selection.append(individual)
+                    break
+
+        if len(selection) < size:
+            raise ValueError(f"Not enough individuals selected: expected {size}, got {len(selection)}")
+
+        return selection
+
+    def evolve(self):
+        sum_score = 0
+        for individual in self.population:
+            individual.get_fitness()
+            sum_score += individual.score
+        self.avg_score = sum_score / len(self.population)
+
+        self.population = self.elitism_selection(self.p_size)
+        self.best_individual = self.population[0]
+        random.shuffle(self.population)
+
+        children = []
+        while len(children) < self.c_size:
+            p1, p2 = self.roulette_wheel_selection(2)
+            c1_genes, c2_genes = p1.genes.copy(), p2.genes.copy()
+            self.crossover(c1_genes, c2_genes)
+            self.mutate(c1_genes)
+            self.mutate(c2_genes)
+            c1, c2 = Individual(c1_genes), Individual(c2_genes)
+            children.extend([c1, c2])
+
+        random.shuffle(children)
+        self.population.extend(children[:self.c_size])
+
+    def save_best(self, generation, filename="best_genes.txt"):
+        if self.best_individual is not None:
+            filename_with_gen = f"{filename.split('.')[0]}_gen{generation}.txt"
+            full_path = os.path.join("genes", filename_with_gen)
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            with open(full_path, "w") as file:
+                genes_str = ' '.join(map(str, self.best_individual.genes))
+                file.write(genes_str)
+            print(f"Saved best genes to {full_path}")
+        else:
+            print("No best individual to save.")
+
+    def save_all(self):
+        for individual in self.population:
+            individual.get_fitness()
+        population = self.elitism_selection(self.p_size)
+        for i in range(len(population)):
+            pth = os.path.join("genes", "genes/all", str(i))
+            with open(pth, "w") as f:
+                for gene in self.population[i].genes:
+                    f.write(str(gene) + " ")
+
+    def train(self, generations, save_interval=100):
+        for generation in range(generations):
+            for individual in self.population:
+                individual.get_fitness()
+            self.avg_score = sum(ind.score for ind in self.population) / len(self.population)
+            self.population.sort(key=lambda ind: ind.fitness, reverse=True)
+            self.best_individual = self.population[0]
+            print(f"Generation {generation + 1}: Best Score = {self.best_individual.score}, Avg Score = {self.avg_score}")
+
+            if generation % save_interval == 0 or generation == generations - 1:
+                self.save_best(generation)
+
+            self.evolve()
+
+if __name__ == "__main__":
+    p_size = 1000
+    c_size = 2000
+    genes_len = 12 * 20 + 20 * 12 + 12 * 4 + 20 + 12 + 4
+    mutate_rate = 0.01
+
+    ga = GA(p_size, c_size, genes_len, mutate_rate)
+    ga.generate_ancestor()
+    ga.train(10000)
