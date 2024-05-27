@@ -1,4 +1,8 @@
 class GameGraph(object):
+    DIRECTIONS = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+    VISION_DIRS = [[0, -1], [1, -1], [1, 0], [1, 1],
+                   [0, 1], [-1, 1], [-1, 0], [-1, -1]]
+
     def __init__(self, snake: [(int, int)], food: (int, int), edges: {}, square_size: int) -> None:
         self.snake = snake
         self.food_x, self.food_y = food
@@ -60,3 +64,42 @@ class GameGraph(object):
 
     def scoreIncrease(self):
         self.score += 1
+
+    def to_input_vector(self):
+        head = self.snake[-1]
+        food_x, food_y = self.food_x, self.food_y
+
+        # 蛇头方向（独热编码）
+        direction = (head[0] - self.snake[-2][0], head[1] - self.snake[-2][1])
+        head_dir_idx = GameGraph.DIRECTIONS.index(direction)
+        head_dir = [0] * 4
+        head_dir[head_dir_idx] = 1
+
+        # 食物方向的编码（使用独热码，类似 get_state）
+        food_direction = [0] * 4
+        if food_y < head[1]:
+            food_direction[0] = 1  # 食物在上
+        elif food_y > head[1]:
+            food_direction[2] = 1  # 食物在下
+        if food_x > head[0]:
+            food_direction[1] = 1  # 食物在右
+        elif food_x < head[0]:
+            food_direction[3] = 1  # 食物在左
+
+        # 周围的障碍物感知（同 get_state）
+        obstacles = []
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:  # 左, 右, 上, 下
+            nx, ny = head[0] + dx, head[1] + dy
+            if 0 <= nx < self.edges['xmax'] and 0 <= ny < self.edges['ymax']:
+                if (nx, ny) in self.snake:
+                    obstacles.append(1)  # 见到自己的身体
+                else:
+                    obstacles.append(0)
+            else:
+                obstacles.append(1)  # 见到墙壁
+
+        # 组合所有特征
+        state = head_dir + food_direction + obstacles
+        return state
+
+
