@@ -3,7 +3,6 @@ import pygame
 import random
 from typing import Optional, Callable, Tuple
 from GameGraph import GameGraph
-import pathfinding_greedy   # 只是为了提供一个可测试的函数，可以去掉
 
 
 class SnakeGame(object):
@@ -35,10 +34,18 @@ class SnakeGame(object):
         self.aim_x, self.aim_y = None, None  # 蛇的起始方向
         self.score = 0  # 分数
 
+        # # 初始化网络
+        # self.network = Net(34, 40, 20, 4)
+        # self.pathfinding = lambda graph: pathfinding_func(self.network, graph)
+
+    def load_weights(self):
+        weights_path = "C:\\Users\\86159\\Desktop\\AI-snake-main\\genes\\best\\310"
+        with open(weights_path, "r") as file:
+            weights = list(map(float, file.read().strip().split()))
+        return weights
 
     def start_game(self):
         self.setup_game()
-
         if not self.NOTDISPLAY:
             self.run_game()
         else:
@@ -102,12 +109,14 @@ class SnakeGame(object):
 
     def change(self, direction):
         """改变蛇的运动方向"""
-        x, y = direction
+        x, y = GameGraph.DIRECTIONS[direction]
         if (x != -self.aim_x or y != -self.aim_y) and (abs(x) + abs(y) == 1):
             self.aim_x = x
             self.aim_y = y
         else:
-            print("朝向改变不合理，请检查你的决策函数")
+            # print('无效决策')
+            x = -x
+            pass
 
     def inside(self, head_x, head_y):
         """判断蛇是否在边框内"""
@@ -154,14 +163,14 @@ class SnakeGame(object):
         # 判断是否撞到边框或者撞到自己 (判断游戏是否结束)
         if not self.inside(head_move_x, head_move_y) or (
                 (head_move_x, head_move_y) in self.snake and (head_move_x, head_move_y) != self.snake[0]):
-            
+
             if not self.NOTDISPLAY:
                 self.screen.fill(pygame.Color('white'))
                 self.draw_frame(self.screen)
                 self.draw_snake(self.screen)
                 self.draw_square(self.screen, head_move_x, head_move_y, self.SIZE, pygame.Color('blue'))
                 pygame.display.flip()
-            print('最终得分: ', self.score)
+            # print('最终得分: ', self.score)
             return False
 
         self.snake.append((head_move_x, head_move_y))  # 新的蛇头
@@ -170,10 +179,10 @@ class SnakeGame(object):
         if head_move_x == self.food_x and head_move_y == self.food_y:
             self.score += 1  # 每吃到一个食物加1分, 用于显示
             self.game_graph.scoreIncrease()
-            print("当前得分：", self.score)
+            # print("当前得分：", self.score)
             if len(self.snake) >= len(self.all_food) * self.LOOSE:  # 限制松一点
                 print('YOU WIN!')
-                print('最终得分: ', self.score)
+                # print('最终得分: ', self.score)
                 return False
             else:
                 self.food_x, self.food_y = self.new_food()
@@ -192,29 +201,31 @@ class SnakeGame(object):
 
             # 显示分数
             score_text = self.font.render(f'Score: {self.score}', True, pygame.Color('black'))
-            self.screen.blit(score_text, (self.screen_width * self.SIZE // 2 - (1.5)*self.SIZE, self.offsety * self.SIZE // 2 ))
+            self.screen.blit(score_text,
+                             (self.screen_width * self.SIZE // 2 - (1.5) * self.SIZE, self.offsety * self.SIZE // 2))
 
             pygame.display.flip()
 
-            pygame.time.set_timer(pygame.USEREVENT, int(1000 / self.MAX_REFRESH_RATE))  #  1s = 1000ms
+            pygame.time.set_timer(pygame.USEREVENT, int(1000 / self.MAX_REFRESH_RATE))  # 1s = 1000ms
 
         return True
-
-
 
     # 新添加的训练接口, 每次接受一个转向输入 (int, int)
     # 更新游戏状态并且返回一个 (res, gamegraph) , res=True 表示游戏继续; res=False 表示游戏结束
     # gamegraph是更新之后的游戏状态, 是一个 GameGraph 对象
 
-    def move_StepByStep(self, direction: Tuple[int, int]) -> Tuple[bool, GameGraph] :
+    def move_StepByStep(self, direction: Tuple[int, int]) -> Tuple[bool, GameGraph]:
         """ 一步一步地移动，用于训练模型 """
         res = self.move(direction)
         return res, self.game_graph
 
-
     def getGamegraph(self) -> GameGraph:
         """返回的是引用，请不要随意更改值"""
         return self.game_graph
+
+
+
+
 
 
 if __name__ == '__main__':
