@@ -65,7 +65,14 @@ class GameGraph(object):
     def scoreIncrease(self):
         self.score += 1
 
+    def GetScore(self):
+        return self.score
+
+    def GetSnake(self):
+        return self.snake
+
     def to_input_vector(self):
+        """输出为一个长度为12的向量, 采用绝对方向"""
         head = self.snake[-1]
         food_x, food_y = self.food_x, self.food_y
 
@@ -102,4 +109,6 @@ class GameGraph(object):
         state = head_dir + food_direction + obstacles
         return state
 
-
+    def to_input_vector2(self):
+        """输出为一个长度为  3x8 = 24 的向量, 采用相对方向"""
+        pass

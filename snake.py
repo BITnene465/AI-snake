@@ -67,15 +67,17 @@ class SnakeGame(object):
                 self.all_food.append((x, y))
 
         # 核心变量赋值
-        self.snake = [(2, 2), (3, 2)]  # list内一定要使用元组
+        self.snake = [(2, 2), (3, 2)]   # list内一定要使用元组
         self.food_x, self.food_y = self.new_food()
-        self.aim_x, self.aim_y = 0, 0
+        self.aim_x, self.aim_y = (self.snake[-1][0] - self.snake[-2][0],
+                                  self.snake[-1][1] - self.snake[-2][1])    # 由蛇确定初始朝向
         self.score = len(self.snake)  # 初始化分数
 
         # 此处传入的是蛇蛇的深复制
         self.game_graph = GameGraph(copy.deepcopy(self.snake), (self.food_x, self.food_y),
                                     {'xmin': self.LEFT, 'xmax': self.RIGHT, 'ymin': self.BOTTOM, 'ymax': self.TOP},
                                     self.SIZE)
+        self.game_graph.set_aim(self.aim_x, self.aim_y)   # 同步一下蛇的朝向
 
     def run_game(self):
         clock = pygame.time.Clock()
@@ -109,14 +111,13 @@ class SnakeGame(object):
 
     def change(self, direction):
         """改变蛇的运动方向"""
-        x, y = GameGraph.DIRECTIONS[direction]
+        x, y = direction
         if (x != -self.aim_x or y != -self.aim_y) and (abs(x) + abs(y) == 1):
             self.aim_x = x
             self.aim_y = y
         else:
-            # print('无效决策')
-            x = -x
-            pass
+            print("方向:", x, y)
+            print('无效决策')
 
     def inside(self, head_x, head_y):
         """判断蛇是否在边框内"""
@@ -223,11 +224,3 @@ class SnakeGame(object):
         """返回的是引用，请不要随意更改值"""
         return self.game_graph
 
-
-
-
-
-
-if __name__ == '__main__':
-    game = SnakeGame(pathfinding_func=pathfinding_greedy.pathfinding, not_display_on_gui=False)
-    game.start_game()

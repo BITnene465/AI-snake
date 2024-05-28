@@ -1,32 +1,68 @@
+import copy
 import numpy as np
 import random
 import os
 from nn import Net
 from snake import SnakeGame  # 确保这个模块可以正常导入
+from typing import Tuple
 from GameGraph import GameGraph  # 确保这个模块可以正常导入
 
+p_size = 1000
+c_size = 2000
+mutate_rate = 0.05
+
 class Individual:
+    # 类变量
+    n_input = 12
+    n_hidden1 = 32
+    n_hidden2 = 12
+    n_output = 3
+    genes_len = (n_input * n_hidden1 + n_hidden1 * n_hidden2 + n_hidden2 * n_output
+                 + n_hidden1 + n_hidden2 + n_output)
     def __init__(self, genes):
         self.genes = genes
         self.score = 0
         self.steps = 0
         self.fitness = 0
-        self.network = Net(n_input=12, n_hidden1=20, n_hidden2=12, n_output=4, weights=self.genes)
+        self.network = Net(n_input=Individual.n_input, n_hidden1=Individual.n_hidden1,
+                           n_hidden2=Individual.n_hidden2, n_output=Individual.n_output, weights=self.genes)
 
     def get_fitness(self):
         game = SnakeGame(not_display_on_gui=True)
         game.setup_game()
         gg = game.getGamegraph()
         step = 0
+        self.score = gg.GetScore()   # 初始化分数
         while True:
             step += 1
-            input_vector = gg.to_input_vector()
-            direction = self.network.predict(input_vector)
+            # input_vector = gg.to_input_vector()
+            input_vector = gg.to_input_vector2()
+            direction = self._dirMapping(gg.GetAim(), self.network.predict(input_vector))
+            #   print(gg.GetAim(), self.network.predict(input_vector))
             res, gg = game.move_StepByStep(direction)
-            if not res or step >= 1000:  # 这里可以调整终止条件，比如达到一定分数或步数
+            if self.score < gg.GetScore():     # 当蛇吃到食物后，增加寿命
+                self.score = gg.GetScore()
+                step -= 70
+                step = max(step, 0)
+            if not res or step >= 100:  # 这里可以调整终止条件，比如达到一定分数或步数
                 break
-        self.score = game.score
         self.fitness = self.score  # 你可以根据需要调整适应度计算方式
+
+    def _dirMapping(self, raw_direction: Tuple[int, int], label: int) -> Tuple[int, int]:
+        """
+        辅助函数，私有方法
+        label : 0, 1, 2 分别表示蛇的保持，左转，右转操作
+        raw_direction : 蛇的原朝向
+        """
+        if label == 0:
+            return copy.copy(raw_direction)
+        elif label == 1:
+            return raw_direction[1], raw_direction[0]
+        elif label == 2:
+            return -raw_direction[1], -raw_direction[0]
+        else:
+            print("模型输出类型不匹配")
+
 
 # GA类和其它方法根据实际需求进行修改
 
@@ -148,11 +184,6 @@ class GA:
             self.evolve()
 
 if __name__ == "__main__":
-    p_size = 1000
-    c_size = 2000
-    genes_len = 12 * 20 + 20 * 12 + 12 * 4 + 20 + 12 + 4
-    mutate_rate = 0.01
-
-    ga = GA(p_size, c_size, genes_len, mutate_rate)
+    ga = GA(p_size, c_size, Individual.genes_len, mutate_rate)
     ga.generate_ancestor()
     ga.train(10000)
