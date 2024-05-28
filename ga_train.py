@@ -13,9 +13,9 @@ mutate_rate = 0.05
 
 class Individual:
     # 类变量
-    n_input = 12
+    n_input = 24
     n_hidden1 = 32
-    n_hidden2 = 12
+    n_hidden2 = 24
     n_output = 3
     genes_len = (n_input * n_hidden1 + n_hidden1 * n_hidden2 + n_hidden2 * n_output
                  + n_hidden1 + n_hidden2 + n_output)
@@ -31,9 +31,11 @@ class Individual:
         game = SnakeGame(not_display_on_gui=True)
         game.setup_game()
         gg = game.getGamegraph()
-        step = 0
+        life_time = 100
+        step = 0    # 记录运行的总步数
         self.score = gg.GetScore()   # 初始化分数
         while True:
+            life_time -= 1
             step += 1
             # input_vector = gg.to_input_vector()
             input_vector = gg.to_input_vector2()
@@ -42,11 +44,11 @@ class Individual:
             res, gg = game.move_StepByStep(direction)
             if self.score < gg.GetScore():     # 当蛇吃到食物后，增加寿命
                 self.score = gg.GetScore()
-                step -= 70
-                step = max(step, 0)
-            if not res or step >= 100:  # 这里可以调整终止条件，比如达到一定分数或步数
+                life_time += 100
+                life_time = min(life_time, 200)
+            if not res or life_time == 0:  # 这里可以调整终止条件，比如达到一定分数或步数
                 break
-        self.fitness = self.score  # 你可以根据需要调整适应度计算方式
+        self.fitness = (self.score + 1 / step) * 100
 
     def _dirMapping(self, raw_direction: Tuple[int, int], label: int) -> Tuple[int, int]:
         """

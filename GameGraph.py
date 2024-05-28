@@ -111,4 +111,27 @@ class GameGraph(object):
 
     def to_input_vector2(self):
         """输出为一个长度为  3x8 = 24 的向量, 采用相对方向"""
-        pass
+        rel_directions = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)]   # 八个方向
+        state = [0] * 24
+        for cnt, rel_direction in enumerate(rel_directions):
+            # 旋转！ 利用复数乘法得到绝对方向
+            dx, dy = (rel_direction[0]*self.aim_x - rel_direction[1]*self.aim_y,
+                            rel_direction[0]*self.aim_y + rel_direction[1]*self.aim_x)
+            distance = 0
+            nowx, nowy = self.snake[-1]
+            flag = True
+            while True:
+                distance += 1
+                nowx += dx
+                nowy += dy
+                if nowx == self.edges['xmin']-1 or nowx == self.edges['xmax']+1 or nowy == self.edges['ymin']-1 or nowy == self.edges['ymax']+1:
+                    state[16+cnt] = 1 / distance
+                    break
+                elif flag and (nowx, nowy) in self.snake:
+                    flag = False
+                    state[8 + cnt] = 1
+                elif nowx == self.food_x and nowy == self.food_y:
+                    state[cnt] = 1
+
+        # print("state:", state)
+        return state
