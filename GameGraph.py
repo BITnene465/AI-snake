@@ -147,3 +147,6 @@ class GameGraph(object):
                 state[3] = 1.0
         # print("state:", state)
         return state
+
+    def getDis(self):
+        return abs(self.food_x - self.snake[-1][0]) + abs(self.food_y - self.snake[-1][1])

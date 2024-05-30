@@ -116,8 +116,6 @@ def pathfinding(game_graph: GameGraph) -> Tuple[int, int]:   # 传入的是 game
         return 0, 1      # 这蛇直接撞死吧，没救了
     return right_moves[random.randint(0, len(right_moves)-1)]   # 两端都包括
 
-    # todo 当没法吃到食物并且没法找到尾巴时，采用 A* 算法向远离食物的方向前进
-
 
 # 测试代码
 if __name__ == '__main__':
