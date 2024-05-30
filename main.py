@@ -1,4 +1,6 @@
 import argparse
+import os
+
 from snake import SnakeGame
 import importlib
 

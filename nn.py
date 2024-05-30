@@ -3,9 +3,14 @@ import torch.nn as nn
 import random
 
 
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
 class Net(nn.Module):
-    def __init__(self, n_input, n_hidden1, n_hidden2, n_output, weights):
+    def __init__(self, n_input, n_hidden1, n_hidden2, n_output, weights, device=torch.device('cpu')):
         super(Net, self).__init__()
+        self.device = device
 
         self.fc1 = nn.Linear(n_input, n_hidden1)
         self.fc2 = nn.Linear(n_hidden1, n_hidden2)
@@ -14,8 +19,10 @@ class Net(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
         self.update_weights(weights)
+        self.to(device)
 
     def forward(self, x):
+        x = x.to(self.device)  # 将输入张量移动到指定设备
         x = self.fc1(x)
         x = self.relu(x)
         x = self.fc2(x)
@@ -24,21 +31,9 @@ class Net(nn.Module):
         x = self.sigmoid(x)
         return x
 
-    # def forward(self, x):
-    #     x = self.fc1(x)
-    #     print("After fc1:", x.shape)
-    #     x = self.relu(x)
-    #     x = self.fc2(x)
-    #     print("After fc2:", x.shape)
-    #     x = self.relu(x)
-    #     x = self.out(x)
-    #     print("After out:", x.shape)
-    #     x = self.sigmoid(x)
-    #     return x
-
     def update_weights(self, weights):
         """ 根据提供的权重列表更新网络权重 """
-        weights = torch.FloatTensor(weights)
+        weights = torch.FloatTensor(weights).to(self.device)  # 确保权重在正确的设备上
         with torch.no_grad():
             # 重新计算权重和偏置的位置
             x = self.fc1.in_features * self.fc1.out_features
@@ -56,9 +51,10 @@ class Net(nn.Module):
 
     def predict(self, input):
         """对输入数据进行预测，返回最大值的索引"""
-        input = torch.tensor(input).float().unsqueeze(0)  # 转换输入为适当的Tensor
+        input = torch.tensor(input).float().unsqueeze(0).to(self.device)  # 转换输入为适当的Tensor并移动到正确设备
         output = self.forward(input)
         return torch.argmax(output, dim=1).item()  # 返回最大值索引
+
 
 
 

@@ -110,14 +110,15 @@ class GameGraph(object):
         return state
 
     def to_input_vector2(self):
-        """输出为一个长度为  3x8 = 24 的向量, 采用相对方向"""
+        """输出为一个长度为  3x8 + 4 = 28 的向量, 采用相对方向"""
         rel_directions = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)]   # 八个方向
-        state = [0] * 24
+        state = [0.0] * 28
         for cnt, rel_direction in enumerate(rel_directions):
             # 旋转！ 利用复数乘法得到绝对方向
             dx, dy = (rel_direction[0]*self.aim_x - rel_direction[1]*self.aim_y,
                             rel_direction[0]*self.aim_y + rel_direction[1]*self.aim_x)
-            distance = 0
+            #   norm = (dx**2 + dy**2) ** 0.5
+            distance = 0.0
             nowx, nowy = self.snake[-1]
             flag = True
             while True:
@@ -125,13 +126,24 @@ class GameGraph(object):
                 nowx += dx
                 nowy += dy
                 if nowx == self.edges['xmin']-1 or nowx == self.edges['xmax']+1 or nowy == self.edges['ymin']-1 or nowy == self.edges['ymax']+1:
-                    state[16+cnt] = 1 / distance
+                    state[20 + cnt] = 1 / distance
                     break
                 elif flag and (nowx, nowy) in self.snake:
                     flag = False
-                    state[8 + cnt] = 1
+                    state[12 + cnt] = 1.0
                 elif nowx == self.food_x and nowy == self.food_y:
-                    state[cnt] = 1
-
+                    state[4 + cnt] = 1.0
+            # 蛇尾方向 one-hot 编码
+            ab_tail_x, ab_tail_y = self.snake[1][0] - self.snake[0][0], self.snake[1][1] - self.snake[0][1]
+            rel_tail_x = ab_tail_x*self.aim_x + ab_tail_y*self.aim_y
+            rel_tail_y = -ab_tail_x*self.aim_y + ab_tail_y*self.aim_x
+            if rel_tail_x == 1:
+                state[0] = 1.0
+            elif rel_tail_x == -1:
+                state[1] = 1.0
+            elif rel_tail_y == 1:
+                state[2] = 1.0
+            else:
+                state[3] = 1.0
         # print("state:", state)
         return state
