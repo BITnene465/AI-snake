@@ -1,4 +1,6 @@
 import copy
+import time
+
 import numpy as np
 import random
 import os
@@ -129,10 +131,13 @@ class GA:
 
         return selection
 
+    def calc_popu_fitness(self):
+        for individual in self.population:
+            individual.get_fitness()
+
     def evolve(self):
         sum_score = 0
         for individual in self.population:
-            individual.get_fitness()
             sum_score += individual.score
         self.avg_score = sum_score / len(self.population)
 
@@ -166,8 +171,6 @@ class GA:
             print("No best individual to save.")
 
     def save_all(self):
-        for individual in self.population:
-            individual.get_fitness()
         population = self.elitism_selection(self.p_size)
         for i in range(len(population)):
             pth = os.path.join("genes", "genes/all", str(i))
@@ -177,13 +180,15 @@ class GA:
 
     def train(self, generations, save_interval=100):
         for generation in range(generations):
-            for individual in self.population:
-                individual.get_fitness()
+            stt = time.time()
+
+            self.calc_popu_fitness()
             self.avg_score = sum(ind.score for ind in self.population) / len(self.population)
             self.population.sort(key=lambda ind: ind.fitness, reverse=True)
             self.best_individual = self.population[0]
-            print(f"Generation {generation + 1}: Best Score = {self.best_individual.score}, Avg Score = {self.avg_score:.3f}")
 
+            edt = time.time()
+            print(f"Generation {generation + 1}: Best Score = {self.best_individual.score}, Avg Score = {self.avg_score:.3f}, time: {edt-stt:.3f}")
             if generation % save_interval == 0 or generation == generations - 1:
                 self.save_best(generation)
 
@@ -194,7 +199,7 @@ if __name__ == "__main__":
         print("device: cuda is available")
     else:
         print("device: cuda is not available")
-    print("训练开始".center(50, '='))
+    print("训练开始".center(100, '='))
     ga = GA(p_size, c_size, Individual.genes_len, mutate_rate)
     print("当前设备: ", ga.device)
     ga.generate_ancestor()
