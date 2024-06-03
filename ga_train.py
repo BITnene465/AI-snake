@@ -42,19 +42,28 @@ class Individual:
         life_time = 100
         steps = 0    # 记录运行的总步数
         self.score = gg.GetScore()   # 初始化分数
+        self.fitness = 0
         while True:
+            dis1 = gg.getDis()
+
             life_time -= 1
             steps += 1
             input_vector = gg.to_input_vector2()
             direction = self._dirMapping(gg.GetAim(), self.network.predict(input_vector))
             res, gg = game.move_StepByStep(direction)
+
+            dis2 = gg.getDis()
+            if dis2 < dis1:
+                self.fitness += 2
+            else:
+                self.fitness -= 2
             if self.score < gg.GetScore():     # 当蛇吃到食物后，增加寿命
                 self.score = gg.GetScore()
                 life_time += 100
-                life_time = min(life_time, 300)
+                life_time = min(life_time, 400)
             if not res or life_time <= 0:  # 这里可以调整终止条件，比如达到一定分数或步数
                 break
-        self.fitness = self.score
+        self.fitness += 100*self.score
 
     def _dirMapping(self, raw_direction: Tuple[int, int], label: int) -> Tuple[int, int]:
         """
@@ -203,4 +212,4 @@ if __name__ == "__main__":
     ga = GA(p_size, c_size, Individual.genes_len, mutate_rate)
     print("当前设备: ", ga.device)
     ga.generate_ancestor()
-    ga.train(4000)
+    ga.train(20000, save_interval=25)

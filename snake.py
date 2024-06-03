@@ -98,7 +98,9 @@ class SnakeGame(object):
 
     def draw_square(self, screen, x, y, size, color):
         """绘制小正方形, 代表一格"""
-        pygame.draw.rect(screen, color, pygame.Rect((x + self.offsetx) * size, (y + self.offsety) * size, size, size))
+        rect = pygame.Rect((x + self.offsetx) * size, (y + self.offsety) * size, size, size)
+        pygame.draw.rect(screen, color, rect)
+        pygame.draw.rect(screen, pygame.Color('black'), rect, 1)  # 添加边框
 
     def draw_frame(self, screen):
         """绘制边框"""
@@ -143,10 +145,16 @@ class SnakeGame(object):
     def draw_snake(self, screen):
         """绘制蛇"""
         num_segments = len(self.snake)
-        start_color = (255, 128, 128)  # 蛇尾
-        end_color = (255, 0, 0)  # 蛇头
-        for i, color in enumerate(self.interpolate_color(start_color, end_color, num_segments)):
+        start_color = (255, 255, 224)  # 蛇尾 (浅黄色)
+        end_color = (255, 140, 0)  # 蛇头 -1  (橙色)
+        head_color = (0, 0, 255)  # 蛇头颜色 (蓝色)
+
+        # 绘制蛇尾到蛇身部分
+        for i, color in enumerate(self.interpolate_color(start_color, end_color, num_segments - 1)):
             self.draw_square(screen, self.snake[i][0], self.snake[i][1], self.SIZE, color)
+
+        # 绘制蛇头
+        self.draw_square(screen, self.snake[-1][0], self.snake[-1][1], self.SIZE, head_color)
 
     def move(self, direction: Tuple[int, int]):
         '''
