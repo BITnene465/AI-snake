@@ -145,7 +145,7 @@ class SnakeGame(object):
     def draw_snake(self, screen):
         """绘制蛇"""
         num_segments = len(self.snake)
-        start_color = (255, 255, 224)  # 蛇尾 (浅黄色)
+        start_color = (255, 255, 150)  # 蛇尾 (浅黄色)
         end_color = (255, 140, 0)  # 蛇头 -1  (橙色)
         head_color = (0, 0, 255)  # 蛇头颜色 (蓝色)
 
