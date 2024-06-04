@@ -1,11 +1,6 @@
-import torch
-import torch.nn as nn
 import random
-
-
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 class Net(nn.Module):
     def __init__(self, n_input, n_hidden1, n_hidden2, n_output, weights, device=torch.device('cpu')):

@@ -1,6 +1,5 @@
-import random
+from snake import SnakeGame
 from ga_train import Individual
-import torch
 import copy
 from typing import Tuple
 from GameGraph import GameGraph
@@ -34,3 +33,8 @@ def _dirMapping(raw_direction: Tuple[int, int], label: int) -> Tuple[int, int]:
         return -raw_direction[1], -raw_direction[0]
     else:
         print("模型输出类型不匹配")
+
+
+if __name__ == '__main__':
+    game = SnakeGame(pathfinding_func=pathfinding, score_rate=0.9, max_fresh_rate=20)
+    game.start_game()
