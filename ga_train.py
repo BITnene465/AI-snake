@@ -18,9 +18,9 @@ mutate_rate = 0.10
 
 class Individual:
     # 类变量
-    n_input = 28
-    n_hidden1 = 20
-    n_hidden2 = 12
+    n_input = 32
+    n_hidden1 = 32
+    n_hidden2 = 24
     n_output = 3
     genes_len = (n_input * n_hidden1 + n_hidden1 * n_hidden2 + n_hidden2 * n_output
                  + n_hidden1 + n_hidden2 + n_output)
@@ -52,11 +52,11 @@ class Individual:
             direction = self._dirMapping(gg.GetAim(), self.network.predict(input_vector))
             res, gg = game.move_StepByStep(direction)
 
-            dis2 = gg.getDis()
-            if dis2 < dis1:
-                self.fitness += 2
-            else:
-                self.fitness -= 2
+            # dis2 = gg.getDis()
+            # if dis2 < dis1:
+            #     self.fitness += 1.5
+            # else:
+            #     self.fitness -= 1
             if self.score < gg.GetScore():     # 当蛇吃到食物后，增加寿命
                 self.score = gg.GetScore()
                 life_time += 100

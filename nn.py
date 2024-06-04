@@ -53,6 +53,7 @@ class Net(nn.Module):
 
 
 
+
 if __name__ == '__main__':
     weights = [random.random() for i in range(12 * 20 + 20 * 12 + 12 * 4 + 20 + 12 + 4)]
     model = Net(12, 20, 12, 4, weights)

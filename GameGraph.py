@@ -111,40 +111,44 @@ class GameGraph(object):
 
     def to_input_vector2(self):
         """输出为一个长度为  3x8 + 4 = 28 的向量, 采用相对方向"""
-        rel_directions = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)]   # 八个方向
-        state = [0.0] * 28
-        for cnt, rel_direction in enumerate(rel_directions):
-            # 旋转！ 利用复数乘法得到绝对方向
-            dx, dy = (rel_direction[0]*self.aim_x - rel_direction[1]*self.aim_y,
-                            rel_direction[0]*self.aim_y + rel_direction[1]*self.aim_x)
+        ab_directions = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)]   # 八个方向
+        state = [0] * 32
+        for cnt, ab_direction in enumerate(ab_directions):
             #   norm = (dx**2 + dy**2) ** 0.5
-            distance = 0.0
+            distance = 0
             nowx, nowy = self.snake[-1]
             flag = True
             while True:
                 distance += 1
-                nowx += dx
-                nowy += dy
+                nowx += ab_direction[0]
+                nowy += ab_direction[1]
                 if nowx == self.edges['xmin']-1 or nowx == self.edges['xmax']+1 or nowy == self.edges['ymin']-1 or nowy == self.edges['ymax']+1:
-                    state[20 + cnt] = 1 / distance
+                    state[24 + cnt] = 1 / distance
                     break
                 elif flag and (nowx, nowy) in self.snake:
                     flag = False
-                    state[12 + cnt] = 1.0
+                    state[16 + cnt] = 1
                 elif nowx == self.food_x and nowy == self.food_y:
-                    state[4 + cnt] = 1.0
-            # 蛇尾方向 one-hot 编码
-            ab_tail_x, ab_tail_y = self.snake[1][0] - self.snake[0][0], self.snake[1][1] - self.snake[0][1]
-            rel_tail_x = ab_tail_x*self.aim_x + ab_tail_y*self.aim_y
-            rel_tail_y = -ab_tail_x*self.aim_y + ab_tail_y*self.aim_x
-            if rel_tail_x == 1:
+                    state[8 + cnt] = 1
+            # 蛇头方向 one-hot 编码
+            if self.aim_x == 1:
                 state[0] = 1.0
-            elif rel_tail_x == -1:
+            elif self.aim_x == -1:
                 state[1] = 1.0
-            elif rel_tail_y == 1:
+            elif self.aim_y == 1:
                 state[2] = 1.0
             else:
                 state[3] = 1.0
+            # 蛇尾方向 one-hot 编码
+            ab_tail_x, ab_tail_y = self.snake[1][0] - self.snake[0][0], self.snake[1][1] - self.snake[0][1]
+            if ab_tail_x == 1:
+                state[4] = 1.0
+            elif ab_tail_x == -1:
+                state[5] = 1.0
+            elif ab_tail_y == 1:
+                state[6] = 1.0
+            else:
+                state[7] = 1.0
         # print("state:", state)
         return state
 
