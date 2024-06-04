@@ -8,7 +8,7 @@ from nn import Net
 
 
 # 模型初始化和权重加载
-weights_path = 'best_genes_gen4550.txt'
+weights_path = 'best_genes_gen1875.txt'
 with open(weights_path, 'r') as file:
     weights = file.read().split()
     weights = [float(w) for w in weights]
@@ -36,5 +36,5 @@ def _dirMapping(raw_direction: Tuple[int, int], label: int) -> Tuple[int, int]:
 
 
 if __name__ == '__main__':
-    game = SnakeGame(pathfinding_func=pathfinding, score_rate=0.9, max_fresh_rate=20)
+    game = SnakeGame(pathfinding_func=pathfinding, score_rate=0.9, max_fresh_rate=40)
     game.start_game()

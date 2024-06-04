@@ -67,7 +67,7 @@ class SnakeGame(object):
                 self.all_food.append((x, y))
 
         # 核心变量赋值
-        self.snake = [(2, 2), (3, 2)]   # list内一定要使用元组
+        self.snake = self.createSnake()
         self.food_x, self.food_y = self.new_food()
         self.aim_x, self.aim_y = (self.snake[-1][0] - self.snake[-2][0],
                                   self.snake[-1][1] - self.snake[-2][1])    # 由蛇确定初始朝向
@@ -124,6 +124,13 @@ class SnakeGame(object):
     def inside(self, head_x, head_y):
         """判断蛇是否在边框内"""
         return self.LEFT <= head_x <= self.RIGHT and self.BOTTOM <= head_y <= self.TOP
+
+
+    def createSnake(self):
+        head = random.randint(self.LEFT+1, self.RIGHT-1), random.randint(self.BOTTOM+1, self.TOP-1)
+        aim = random.choice([(1, 0), (0, 1), (-1, 0), (0, -1)])
+        body = head[0] - aim[0], head[1] - aim[1]
+        return [head, body]
 
     def new_food(self):
         """随机生成食物位置"""
