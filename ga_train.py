@@ -63,7 +63,7 @@ class Individual:
                 life_time = min(life_time, 400)
             if not res or life_time <= 0:  # 这里可以调整终止条件，比如达到一定分数或步数
                 break
-        self.fitness += 100*self.score
+        self.fitness += self.score
 
     def _dirMapping(self, raw_direction: Tuple[int, int], label: int) -> Tuple[int, int]:
         """
