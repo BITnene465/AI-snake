@@ -8,7 +8,7 @@ from nn import Net
 
 
 # 模型初始化和权重加载
-weights_path = 'genes/best_genes_gen6050.txt'
+weights_path = 'best3.txt'
 with open(weights_path, 'r') as file:
     weights = file.read().split()
     weights = [float(w) for w in weights]

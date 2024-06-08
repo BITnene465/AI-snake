@@ -100,5 +100,5 @@ def plot_data(data_path="./scores.json", save_path="./performance_plot.png"):
 
 
 if __name__ == '__main__':
-    save_data(0, 6500, 25, repeat=25, data_path="./scores.json")
-    plot_data(data_path="./scores.json", save_path="./performance_plot.png")
+    save_data(0, 6500, 25, repeat=100, data_path="./scores_re100.json")
+    plot_data(data_path="./scores.json", save_path="./performance_plot_re100.png")
