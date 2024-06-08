@@ -2,7 +2,7 @@ import random
 import copy
 from GameGraph import GameGraph
 from queue import PriorityQueue
-
+from snake import SnakeGame
 
 # 曼哈顿距离，如果使用这个启发式函数， 可能导致路线过于单一（完全追求最短）
 def heuristic1(start, end) -> float:
@@ -106,3 +106,8 @@ def pathfinding(game_graph: GameGraph) -> (int, int):   # 传入的是 game_grap
         if len(right_moves) == 0:
             return (0, 1)
         return right_moves[random.randint(0, len(right_moves)-1)]
+
+
+if __name__ == '__main__':
+    game = SnakeGame(pathfinding_func=pathfinding, score_rate=0.9, max_fresh_rate=40)
+    game.start_game()

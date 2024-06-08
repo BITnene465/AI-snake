@@ -3,6 +3,7 @@ import copy
 from GameGraph import GameGraph
 from collections import deque
 from typing import Tuple
+from snake import SnakeGame
 
 def bfs(start, end, game_graph: GameGraph):  # 最重要的函数之一
     moves = [(0, 1), (0, -1), (1, 0), (-1, 0)]
@@ -119,5 +120,5 @@ def pathfinding(game_graph: GameGraph) -> Tuple[int, int]:   # 传入的是 game
 
 # 测试代码
 if __name__ == '__main__':
-    game = GameGraph([(0, 0), (0, 1)], (0, 0), {'xmin': -20, 'xmax': 18, 'ymin': -19, 'ymax': 19}, 10)
-    print(dfs_longest((0, 0), (1, 1), game))
+    game = SnakeGame(pathfinding_func=pathfinding, score_rate=0.9, max_fresh_rate=40)
+    game.start_game()
